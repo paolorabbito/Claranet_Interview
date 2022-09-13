@@ -1,0 +1,35 @@
+{
+  "name": "claranet_interview",
+  "version": "1.0.0",
+  "description": "## PROGETTO L'idea è quella di un progetto gestionale che permetta, ad un proprietario di una catena di ristoranti che utilizzano carte di fidelizzazione, di ottenere in tempo reale statistiche sul consumo da parte dei clienti e sulle perdite da parte dei punti vendita. Inoltre il progetto finale dovrebbe permettere anche la registrazione e l'accesso di utenti identificati attraverso il numero della carta di fidelizzazione. Ogni singolo utente quindi potrà accedere alle proprie offerte e tramite l'app o la carta potrà registrare i suoi acquisti nei punti vendita. Nello specifico gli end-point che andrò ad implementare sono 3: - Il login per garantire unicamente l'autenticazione dell'amministratore o amministratori che possono accedere alle informazioni statistiche - Un end-point che fornisce dati statistici inerenti alla spesa media dei clienti nei punti ristoro, al tempo medio trascorso tra una visita e l'altra e alle votazioni medie ricevute - Un end-point che restituirà dati relativi ai consumi,",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node ./src/app.js",
+    "dev": "nodemon src/app.js",
+    "migrate": "node src/database/migration/migration.js",
+    "seed": "node src/database/migration/seed.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/paolorabbito/Claranet_Interview.git"
+  },
+  "author": "Paolo Rabbito",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/paolorabbito/Claranet_Interview/issues"
+  },
+  "homepage": "https://github.com/paolorabbito/Claranet_Interview#readme",
+  "dependencies": {
+    "bcrypt": "^5.0.1",
+    "dotenv": "^16.0.2",
+    "express": "^4.18.1",
+    "express-rate-limit": "^6.6.0",
+    "express-validator": "^6.14.2",
+    "jsonwebtoken": "^8.5.1",
+    "knex": "^2.3.0",
+    "nodemon": "^2.0.19",
+    "pg": "^8.8.0",
+    "pg-format": "^1.0.4",
+    "postgres-migration": "^1.0.6"
+  }
+}

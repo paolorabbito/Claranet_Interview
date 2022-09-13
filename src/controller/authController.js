@@ -2,9 +2,13 @@ const pool = require('../database/db');
 const format = require('pg-format');
 require("dotenv").config();
 const bcrypt = require('bcrypt');
-const JWT = require('jsonwebtoken');
+const jwt = require('jsonwebtoken');
 
-
+/**
+ * Usata da me perinserire utenti di test del DB
+ * @param {*} req 
+ * @param {*} res 
+ */
 exports.signup = async (req, res) => {
     const saltRounds = 10;
     const user = req.body.user;
@@ -15,13 +19,19 @@ exports.signup = async (req, res) => {
         query = format(`INSERT INTO users (card_id, password) VALUES (%L, %L)`, user, hash);
         console.log(query)
         let dbRes = await pool.query(query);
-        res.send(dbRes);
+        return res.send(dbRes);
     });
     
 }
 
-
+/**
+ * Usata per richiedere un access token autenticandosi con le proprie credenziali
+ * @param {*} req 
+ * @param {*} res 
+ * @returns 
+ */
 exports.login = async (req, res) => {
+
     const user = req.body.user;
     const password = req.body.password;
 
@@ -35,7 +45,7 @@ exports.login = async (req, res) => {
         });
     }
        
-    let query = format(`SELECT * FROM users WHERE card_id = %L`, user);
+    let query = format(`SELECT * FROM users WHERE card_id = %L`, user); //Sanifica i parametri che andranno nella query
     let tmp = await pool.query(query);
     let userData = tmp.rows[0];
 
@@ -43,13 +53,13 @@ exports.login = async (req, res) => {
 
         if(result) {
 
-            const accessToken = await JWT.sign(
+            const accessToken = await jwt.sign(
                 { user },
                 process.env.JWT_SECRET,
                 { expiresIn: "3600s"}
             );
 
-            const refreshToken = await JWT.sign(
+            const refreshToken = await jwt.sign(
               { user },
               process.env.REFRESH_SECRET,
               { expiresIn: "1h"}
@@ -71,4 +81,68 @@ exports.login = async (req, res) => {
               });;
         }
     }); 
+}
+
+/**
+ * Usata per richiedere nuovi token una volta scaduto l'access token
+ * @param {*} req 
+ * @param {*} res 
+ * @returns 
+ */
+exports.refresh = async (req, res) => {
+
+  let refreshToken = '';
+  const authHeader = req.headers["authorization"];
+
+  if(authHeader)
+    refreshToken = authHeader.split(" ")[1];
+  else
+    res.status(403).json({
+      errors: [
+        {
+          message: `Unauthorized: Refresh Token not found`,
+        },
+      ],
+    });
+
+
+  try {
+    const decoded = await jwt.verify(refreshToken, process.env.REFRESH_SECRET);
+
+
+    if(decoded && decoded.user) {
+
+      let user = decoded.user;
+
+      const accessToken = await jwt.sign(
+          { user },
+          process.env.JWT_SECRET,
+          { expiresIn: "3600s"}
+      );
+
+      const refreshToken = await jwt.sign(
+        { user },
+        process.env.REFRESH_SECRET,
+        { expiresIn: "1h"}
+    );
+      
+    return res.json({
+      user,
+      accessToken,
+      refreshToken
+    });
+
+  }
+    
+  } catch (error) {
+
+    return res.status(403).json({
+      errors: [
+        {
+          message: `Unauthorized: Refresh Token not valid`,
+        },
+      ],
+    });
+
+  }
 }

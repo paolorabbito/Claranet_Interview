@@ -7,6 +7,6 @@ const router = express.Router();
 //Caching requests for performance
 //let cache = apicache.middleware;
 
-router.get('/', authAdminToken, apiController.getUserInfo);
+router.get('/stats/product', authAdminToken, apiController.getStatsProduct);
 
 module.exports =  router;

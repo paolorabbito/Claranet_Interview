@@ -6,7 +6,8 @@ const router = express.Router();
 //const apicache = require('apicache');
 //let cache = apicache.middleware;
 
-router.get('/stats/product', authAdminToken, apiController.getStatsProduct);
+router.get('/stats/product', authAdminToken, apiController.getProductStats);
+router.get('/stats/product/avg', authAdminToken, apiController.getProductAverage);
 router.get('/user/info', authUserToken, apiController.getUserInfo);
 
 module.exports =  router;

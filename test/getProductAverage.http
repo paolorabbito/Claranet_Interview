@@ -1,0 +1,3 @@
+GET http://localhost:3000/api/stats/product/avg?product=1&from=2021-09-28&to=2021-09-29
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiMDAwMDAwMDAiLCJpYXQiOjE2NjMyNTE1NTEsImV4cCI6MTY2MzI1NTE1MX0.k-RhSszuEET1SWJ9dXEcpbd0QePqZxZtk3xL84wTkFU
+Content-Type: application/json

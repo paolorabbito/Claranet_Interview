@@ -1,3 +1,12 @@
+/**
+ * In un contesto reale si potrebbero implementare più di 2 livelli di accesso 
+ * Magari inserendo un controllo sun un determinato campo degli header tipo x-client
+ * Dove ad un dato x-client spetta l'accesso solo a determinate risorse o dove le quey vengano
+ * Filtrate inserendo solo i dati relativi al punto vendita identificato dal campo.
+ * O ancora si potrebbe pensare di creare due utenti di admin, e non solo uno in modo 
+ * Da permettere diversi livelli di accesso in base alle informazioni da controllare
+ */
+
 const jwt = require("jsonwebtoken");
 require('dotenv').config();
 
@@ -49,7 +58,7 @@ const authUserToken = async (req, res, next) => {
     const decoded = await jwt.verify(token, process.env.JWT_SECRET);
     let user = decoded.user;
 
-    if (user) { //Si potrebbe pensare di escludere l'utente admin
+    if (user) { //Si potrebbe pensare di escludere l'utente admin '00000000'
       req.user = user;
       next();
     } else

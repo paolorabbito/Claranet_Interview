@@ -1,3 +1,18 @@
-GET http://localhost:3000/api/stats/product?exports=1 HTTP/1.1
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiMDAwMDAwMDAiLCJpYXQiOjE2NjMyNDIwMDYsImV4cCI6MTY2MzI0NTYwNn0.rAukFXLuF0126pIrtxbP5Yv7j3BLTCnKwcFWemzscxI
+# GET http://localhost:3000/api/stats/product?exports=1 HTTP/1.1
+# Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiMDAwMDAwMDAiLCJpYXQiOjE2NjMyNDIwMDYsImV4cCI6MTY2MzI0NTYwNn0.rAukFXLuF0126pIrtxbP5Yv7j3BLTCnKwcFWemzscxI
+# Content-Type: application/json
+
+
+# GET http://localhost:3000/api/stats/product??page=1&pageSize=10&salesPoint=1&salesDate=2021-09-28 HTTP/1.1
+# Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiMDAwMDAwMDAiLCJpYXQiOjE2NjMyNDIwMDYsImV4cCI6MTY2MzI0NTYwNn0.rAukFXLuF0126pIrtxbP5Yv7j3BLTCnKwcFWemzscxI
+# Content-Type: application/json
+
+# GET http://localhost:3000/api/stats/product??page=1&pageSize=3 HTTP/1.1
+# Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiMDAwMDAwMDAiLCJpYXQiOjE2NjMyNDIwMDYsImV4cCI6MTY2MzI0NTYwNn0.rAukFXLuF0126pIrtxbP5Yv7j3BLTCnKwcFWemzscxI
+# Content-Type: application/json
+
+GET http://localhost:3000/api/stats/product??page=1&pageSize=3&salesDate=2021-09-28 HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiMDAwMDAwMDAiLCJpYXQiOjE2NjMyNzIxODcsImV4cCI6MTY2MzI3NTc4N30.Mwj5EeCiQkexYmBd8VjWs3OCqp9H-KxuptW2W3X4MNU
 Content-Type: application/json
+
+

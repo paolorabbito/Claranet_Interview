@@ -17,6 +17,8 @@ Nello specifico gli end-point che andrò ad implementare sono 3:
 - La libreria pg-format per includere i dati passati dalle richieste nelle query senza incorrere in problemi di SQL injection
 
 
+
+
 ## STRUTTURA DEL PROGETTO
 - [./test] file con le richieste http di test
 - [./src/routes] file dedicati alle routes divisi per competenze
@@ -25,6 +27,22 @@ Nello specifico gli end-point che andrò ad implementare sono 3:
 - [./src/middleware] funzione richiamate per controllare i permessi di accesso alle risorse
 - [./src/services] moduli con funzionalità di servizio riusabili
 
+
+## END-POINT
+- /auth/login
+    - body: { user: [string], password: [string]}
+    - return: { user: [string], accessToken: [string], refreshToken: [string] }
+- /auth/refresh
+    - header: Authorization Bearer [refreshToken: string]
+    - return: { user: [string], accessToken: [string], refreshToken: [string] }
+- /api/stats/product
+    - header: Authorization Bearer [refreshToken: string]
+    - queryParams: [page, pageSize, exports, salesPoint, date]
+    - return: { city: [string], description: [string], cash_out: [number], cash_in: [number], in: [number], out: [number], date: [date] } or data.xlsx in download
+- /api/stats/product/avg
+    - header: Authorization Bearer [refreshToken: string]
+    - queryParams: [page, pageSize, product, from, to]
+    - return: { id: [number], productionAvg: [number], salesAvg: [number], cashOutAvg: [number], cashInAvg: [number], earn: [number] }
 
 ## NOTE
 - Il database è stato creato a scopo di test, ma non vi è stata una progettazione vera e propria, quindi mancano componenti quali trigger che lo rendano in grado di aggiornare le tabelle dinamicamente in base a certi cambiamenti

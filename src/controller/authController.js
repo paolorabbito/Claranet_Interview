@@ -25,7 +25,7 @@ exports.signup = async (req, res) => {
 }
 
 /**
- * Usata per richiedere un access token autenticandosi con le proprie credenziali
+ * Autenticazione e invio del jwt in risposta
  * @param {*} req 
  * @param {*} res 
  * @returns 
@@ -84,7 +84,7 @@ exports.login = async (req, res) => {
 }
 
 /**
- * Usata per richiedere nuovi token una volta scaduto l'access token
+ * Richiesta refresh token
  * @param {*} req 
  * @param {*} res 
  * @returns 

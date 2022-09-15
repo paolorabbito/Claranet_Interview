@@ -1,34 +1,38 @@
+/**
+ * Qui sono state implementate delle piccole funzioni che rispecchiato delle richieste
+ * In un contesto reale senza dilungarsi troppo sui dettagli.
+ * Ovviamente in un contesto reale i filtri da implementare potrebbero essere di più
+ * Si potrebbe avere la necessità di esportare i dati in più formati e non solo in excel
+ * La paginazione potrebbe essere più dettagliate e quindi richiedere un conteggio totale degli
+ * Elementi in modo da mostrare un contatore del tipo  "Visualizzati da 1 a 10 di 130 elementi"
+ */
+
 const format = require('pg-format');
 const xlsx = require('xlsx');
 
 const setParams = (params, req) => {
 
-    if(req.query.page) 
-        params.pagination.page = req.query.page
-    else
-        params.pagination.page = 1;
+    if(req.query.page)  params.pagination.page = req.query.page
+    else    params.pagination.page = 1;
 
-    if(req.query.pageSize)
-        params.pagination.pageSize = req.query.pageSize;
-    else    
-        params.pagination.pageSize = 10;
+    if(req.query.pageSize)  params.pagination.pageSize = req.query.pageSize;
+    else    params.pagination.pageSize = 10;
 
-    if(req.query.sort)
-        params.pagination.sort = req.query.sort;
-    else    
-        params.pagination.sort = 'DESC';
+    if(req.query.sort)  params.pagination.sort = req.query.sort;
+    else    params.pagination.sort = 'DESC';
 
+    if(req.query.salesPoint)    params.filter.salesPoint = req.query.salesPoint;
 
-    if(req.query.salesPoint)
-        params.filter.salesPoint = req.query.salesPoint;
+    if(req.query.date)  params.filter.date = req.query.date;
 
-    if(req.query.salesDate)
-        params.filter.salesDate = req.query.salesDate;
+    if(req.query.from)  params.filter.from = req.query.from;
+
+    if(req.query.to)    params.filter.to = req.query.to;
     
-    if(req.query.exports)
-        params.filter.exports = true;
-    else
-        params.filter.exports = false;
+    if(req.query.product)   params.filter.product = req.query.product;
+
+    if(req.query.exports)   params.exports = true;
+    else    params.exports = false;
 
     console.log(params)
 
@@ -44,7 +48,7 @@ const queryPagination = (query, params) => {
 
 }
 
-const cityFilter = (query, filter) => {
+const filterByCity = (query, filter) => {
 
     query += `sp.id = %L `;
     query = format(query, filter);
@@ -52,9 +56,36 @@ const cityFilter = (query, filter) => {
 
 }
 
-const dateFilter = (query, filter) => {
+const filterByDate = (query, filter) => {
 
     query += `s.date = %L `;
+    query = format(query, filter);
+    return query;
+
+}
+
+/**
+ * Non usati per via dei pochi dati di esempio nel database
+ */
+const filterFromDate = (query, filter) => {
+
+    query += `s.date >= %L `;
+    query = format(query, filter);
+    return query;
+
+}
+
+const filterToDate = (query, filter) => {
+
+    query += `s.date <= %L `;
+    query = format(query, filter);
+    return query;
+
+}
+
+const filterByProduct = (query, filter) => {
+
+    query += `p.id = %L `;
     query = format(query, filter);
     return query;
 
@@ -65,10 +96,9 @@ const jsonToExcel = (jsonInput, ) => {
     const workSheet = xlsx.utils.json_to_sheet(jsonInput);
     const workBook = xlsx.utils.book_new();
     xlsx.utils.book_append_sheet(workBook, workSheet, "data");
-    xlsx.write(workBook, { bookType: 'xlsx', type: "buffer" });
     xlsx.write(workBook, { bookType: "xlsx", type: "binary" });
-    xlsx.writeFile(workBook, "data.xlsx");
+    xlsx.writeFile(workBook, "public/file/data.xlsx");
 
 }
 
-module.exports = { setParams, queryPagination, cityFilter, dateFilter, jsonToExcel }
+module.exports = { setParams, queryPagination, filterByCity, filterByDate, filterByProduct, jsonToExcel, filterFromDate, filterToDate }

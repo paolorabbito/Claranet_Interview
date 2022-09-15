@@ -30,6 +30,7 @@
     "nodemon": "^2.0.19",
     "pg": "^8.8.0",
     "pg-format": "^1.0.4",
-    "postgres-migration": "^1.0.6"
+    "postgres-migration": "^1.0.6",
+    "xlsx": "^0.18.5"
   }
 }

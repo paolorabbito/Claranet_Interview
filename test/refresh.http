@@ -1,0 +1,3 @@
+POST http://localhost:3000/auth/refresh HTTP/1.1
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiMDAwMDAwMDAiLCJpYXQiOjE2NjMyMzcyOTIsImV4cCI6MTY2MzI0MDg5Mn0._94foqzpqDh3Uy6l1Zv54qQ1SE-WiFJF8OUnMlyUYXw
+Content-Type: application/json

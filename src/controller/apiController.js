@@ -1,15 +1,17 @@
 const pool = require('../database/db');
-const format = require('pg-format');
+const services = require('../services/queryService');
 require("dotenv").config();
+const fileSystem = require('fs');
+const path = require('path');
 
-exports.getStatsProduct = async (req, res) => {
+const getStatsProduct = async (req, res) => {
 
     let params = {
         pagination: {},
         filter: {}
     };
 
-    setParams(params, req);
+    services.setParams(params, req);
 
     let query = `SELECT sp.city, p.description, (p.production_cost*s.in) as cash_out, (p.selling_cost*s.out) as cash_in, s.in, s.out, s.date
                  FROM product as p
@@ -17,79 +19,48 @@ exports.getStatsProduct = async (req, res) => {
                  INNER JOIN sales_point as sp on sp.id = s.sales_point `;
 
     if(Object.keys(params.filter).length !== 0) {
-        query += `WHERE `;
+
+        if((Object.keys(params.filter).length == 1 && !params.filter.exports) || Object.keys(params.filter).length >= 1)
+            query += `WHERE `;
 
         if(params.filter.salesPoint)
-            query = cityFilter(query, params.filter.salesPoint);
+            query = services.cityFilter(query, params.filter.salesPoint);
 
-        console.log(Object.keys(params.filter).length)
+        if(Object.keys(params.filter).length>=2) {
+            query += ' AND ';
+        }
         
         if(params.filter.salesDate)
-            query = dateFilter(query, params.filter.salesDate);
+            query = services.dateFilter(query, params.filter.salesDate);
 
     }
     query += ` ORDER BY s.date `;
-    query = queryPagination(query, params);
+    query = services.queryPagination(query, params);
     console.log(query);
 
 
     let resDb = await pool.query(query);
+
+    if(params.filter.exports) {
+
+        services.jsonToExcel(resDb.rows);
+        let filePath = path.join(__dirname, '../../data.xlsx');
+        let stat = fileSystem.statSync(filePath);
+        res.setHeader('Content-Length', stat.size);
+        res.setHeader('Content-Type', 'text/xlsx');
+        res.setHeader('Content-Disposition', 'attachment; filename=data.xlsx');
+        res.download(filePath);
+    }
     
     res.json(resDb.rows);
 
 }
 
- 
-const setParams = (params, req) => {
 
-    if(req.query.page) 
-        params.pagination.page = req.query.page
-    else
-        params.pagination.page = 1;
-
-    if(req.query.pageSize)
-        params.pagination.pageSize = req.query.pageSize;
-    else    
-        params.pagination.pageSize = 10;
-
-    if(req.query.sort)
-        params.pagination.sort = req.query.sort;
-    else    
-        params.pagination.sort = 'DESC';
-
-
-    if(req.query.salesPoint)
-        params.filter.salesPoint = req.query.salesPoint;
-
-    if(req.query.salesDate)
-        params.filter.salesDate = req.query.salesDate;
-
-    console.log(params)
-
+const getUserInfo = async (req, res) => {
+    const user = req.user;
+    let query = `SELECT * `;
+    console.log(user);
 }
 
-const queryPagination = (query, params) => {
-
-    let pageSize = Number.parseInt(params.pagination.pageSize);
-    let page = (Number.parseInt(params.pagination.page)-1)*pageSize;
-    query += `LIMIT %L OFFSET %L`;
-    query = format(query, pageSize, page);
-    return query;
-
-}
-
-const cityFilter = (query, filter) => {
-
-    query += `sp.id = %L `;
-    query = format(query, filter);
-    return query;
-
-}
-
-const dateFilter = (query, filter) => {
-
-    query += `AND s.date = %L `;
-    query = format(query, filter);
-    return query;
-
-}
+module.exports = {getUserInfo, getStatsProduct};

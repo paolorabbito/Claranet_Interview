@@ -9,6 +9,8 @@
 
 const jwt = require("jsonwebtoken");
 require('dotenv').config();
+const pool = require('../database/db');
+const format = require('pg-format');
 
 const authAdminToken = async (req, res, next) => {
 
@@ -28,7 +30,12 @@ const authAdminToken = async (req, res, next) => {
     const decoded = await jwt.verify(token, process.env.JWT_SECRET);
     let user = decoded.user;
 
-    if (user === '00000000')
+    let query = "SELECT type FROM users WHERE card_id = %L";
+    query = format(query, user);
+    let resDb = await pool.query(query);
+    console.log(resDb.rows[0].type);
+
+    if (resDb.rows[0].type == 1)
       next();
     else
       unauthorized('Invalid Token', res);
@@ -39,6 +46,43 @@ const authAdminToken = async (req, res, next) => {
 
   }
 };
+
+
+const authOperatorToken = async (req, res, next) => {
+
+  let token = '';
+  const authHeader = req.headers["authorization"];
+
+  if(authHeader)
+    token = authHeader.split(" ")[1];
+  else
+    unauthorized('Token not found', res);
+
+  if (!token) 
+    unauthorized('Token not found', res);
+
+  try {
+
+    const decoded = await jwt.verify(token, process.env.JWT_SECRET);
+    let user = decoded.user;
+
+    let query = "SELECT type FROM users WHERE card_id = %L";
+    query = format(query, user);
+    let resDb = await pool.query(query);
+    console.log(resDb.rows[0].type);
+
+    if (resDb.rows[0].type == 1 || resDb.rows[0].type == 2)
+      next();
+    else
+      unauthorized('Invalid Token', res);
+
+  } catch (error) {
+
+    unauthorized('Invalid Token', res);
+
+  }
+};
+
 
 const authUserToken = async (req, res, next) => {
 
@@ -82,4 +126,4 @@ const unauthorized = (msg,res) => {
   });
 }
 
-module.exports = { authAdminToken, authUserToken };
+module.exports = { authAdminToken, authUserToken, authOperatorToken };

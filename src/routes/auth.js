@@ -1,8 +1,9 @@
 const express = require('express');
 const authController = require('../controller/authController');
+const { authOperatorToken } = require('../middleware/auth');
 const router = express.Router();
 
-router.post('/signup', authController.signup); //Utilizzata da me solo per poter inserire degli utenti di test nel database
+router.post('/signup', authOperatorToken ,authController.signup); 
 router.post('/login', authController.login);
 router.post('/refresh', authController.refresh);
 

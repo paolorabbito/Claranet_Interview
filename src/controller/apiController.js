@@ -20,6 +20,7 @@ const getProductStats = async (req, res) => {
         pagination: {},
         filter: {}
     };
+    let resDb;
 
     services.setParams(params, req);
 
@@ -48,7 +49,12 @@ const getProductStats = async (req, res) => {
     query += ` ORDER BY s.date `;
     query = services.queryPagination(query, params);
     console.log(query);
-    let resDb = await pool.query(query);
+    try {
+        resDb = await pool.query(query);
+      } catch (error) {
+        res.status(500).send(error);
+      }
+      
 
     if(params.exports) {
 
@@ -71,6 +77,7 @@ const getProductAverage = async (req, res) => {
         pagination: {},
         filter: {}
     };
+    let resDb;
 
     services.setParams(params, req);
 
@@ -102,7 +109,12 @@ const getProductAverage = async (req, res) => {
     query += ` GROUP BY p.id `; 
 
     console.log(query);
-    resDb = await pool.query(query);
+    try {
+        resDb = await pool.query(query);
+    } catch (error) {
+        res.status(500).send(error);
+    }
+      
 
     let cashOutAvg = resDb.rows[0].media_prodotti*resDb.rows[0].production_cost;
     let cashInAvg = resDb.rows[0].media_venduti*resDb.rows[0].selling_cost;

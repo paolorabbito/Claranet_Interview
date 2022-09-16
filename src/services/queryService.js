@@ -91,7 +91,7 @@ const filterByProduct = (query, filter) => {
 
 }
 
-const jsonToExcel = (jsonInput, ) => {
+const jsonToExcel = (jsonInput) => {
 
     const workSheet = xlsx.utils.json_to_sheet(jsonInput);
     const workBook = xlsx.utils.book_new();

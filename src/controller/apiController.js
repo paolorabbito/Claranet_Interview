@@ -29,19 +29,19 @@ const getProductStats = async (req, res) => {
                  INNER JOIN sales as s on p.id = s.product_id
                  INNER JOIN sales_point as sp on sp.id = s.sales_point `;
 
-    if(Object.keys(params.filter).length !== 0) {
+    if (Object.keys(params.filter).length !== 0) {
 
-        if(Object.keys(params.filter).length >= 1)
+        if (Object.keys(params.filter).length >= 1)
             query += `WHERE `;
 
-        if(params.filter.salesPoint)
+        if (params.filter.salesPoint)
             query = services.filterByCity(query, params.filter.salesPoint);
 
-        if(Object.keys(params.filter).length>=2) {
+        if (Object.keys(params.filter).length >= 2) {
             query += ' AND ';
         }
-        
-        if(params.filter.date)
+
+        if (params.filter.date)
             query = services.filterByDate(query, params.filter.date);
 
     }
@@ -51,23 +51,25 @@ const getProductStats = async (req, res) => {
     console.log(query);
     try {
         resDb = await pool.query(query);
-      } catch (error) {
+
+        if (params.exports) {
+
+            services.jsonToExcel(resDb.rows);
+            let filePath = path.join(__dirname, '../../public/file/data.xlsx');
+            let stat = fileSystem.statSync(filePath);
+            res.setHeader('Content-Length', stat.size);
+            res.setHeader('Content-Type', 'text/xlsx');
+            res.setHeader('Content-Disposition', 'attachment; filename=data.xlsx');
+            res.download(filePath);
+        }
+
+        res.status(200).json(resDb.rows);
+    } catch (error) {
         res.status(500).send(error);
-      }
-      
-
-    if(params.exports) {
-
-        services.jsonToExcel(resDb.rows);
-        let filePath = path.join(__dirname, '../../public/file/data.xlsx');
-        let stat = fileSystem.statSync(filePath);
-        res.setHeader('Content-Length', stat.size);
-        res.setHeader('Content-Type', 'text/xlsx');
-        res.setHeader('Content-Disposition', 'attachment; filename=data.xlsx');
-        res.download(filePath);
     }
-    
-    res.status(200).json(resDb.rows);
+
+
+
 }
 
 
@@ -81,8 +83,14 @@ const getProductAverage = async (req, res) => {
 
     services.setParams(params, req);
 
-    if(!params.filter.product)
-        res.status(400).send("Inserire codice prodotto!")
+    if (!params.filter.product)
+        res.status(400).json({
+            errors: [
+              {
+                message: "Product code is missing!",
+              },
+            ],
+        });
 
     let query = `SELECT p.id,
                         AVG(s.in) as media_prodotti,
@@ -94,41 +102,43 @@ const getProductAverage = async (req, res) => {
                  INNER JOIN sales_point as sp on sp.id = s.sales_point 
                  WHERE `;
 
-    query = services.filterByProduct(query, params.filter.product);
+    query = services.filterByProduct(query, params.filter.product); //TODO: CAMBIARE A PATH PARAMS
 
-    if(params.filter.from) {
+    if (params.filter.from) {
         query += ' AND ';
         query = services.filterFromDate(query, params.filter.from);
     }
 
-    if(params.filter.to) {
+    if (params.filter.to) {
         query += ' AND ';
         query = services.filterToDate(query, params.filter.to);
     }
 
-    query += ` GROUP BY p.id `; 
+    query += ` GROUP BY p.id `;
 
     console.log(query);
     try {
         resDb = await pool.query(query);
+
+        let cashOutAvg = resDb.rows[0].media_prodotti * resDb.rows[0].production_cost;
+        let cashInAvg = resDb.rows[0].media_venduti * resDb.rows[0].selling_cost;
+
+        resToSend = {
+            id: resDb.rows[0].id,
+            productionAvg: resDb.rows[0].media_prodotti,
+            salesAvg: resDb.rows[0].media_venduti,
+            cashOutAvg: cashOutAvg,
+            cashInAvg: cashInAvg,
+            earn: cashInAvg - cashOutAvg
+        }
+
+        res.status(200).json(resToSend)
     } catch (error) {
         res.status(500).send(error);
     }
-      
 
-    let cashOutAvg = resDb.rows[0].media_prodotti*resDb.rows[0].production_cost;
-    let cashInAvg = resDb.rows[0].media_venduti*resDb.rows[0].selling_cost;
 
-    resToSend = {
-        id: resDb.rows[0].id,
-        productionAvg: resDb.rows[0].media_prodotti,
-        salesAvg: resDb.rows[0].media_venduti,
-        cashOutAvg: cashOutAvg,
-        cashInAvg: cashInAvg,
-        earn: cashInAvg - cashOutAvg
-    }
-
-    res.status(200).json(resToSend);
+    ;
 }
 
 

@@ -22,7 +22,14 @@ exports.signup = async (req, res) => {
   const gender = req.body.gender;
  
 
-  if (!user || !password) res.status(400).send("User or password is missing");
+  if (!user || !password) 
+    res.status(400).json({
+      errors: [
+        {
+          message: "User or password not present!",
+        },
+      ],
+    });
 
   let query = '';
 
@@ -37,12 +44,24 @@ exports.signup = async (req, res) => {
         try {
           console.log(query)
           await pool.query(query);
-          res.status(200).send("User signed up correclty!");
+          res.status(200).json({
+            errors: [
+              {
+                message: "Signed up correctly!",
+              },
+            ],
+          });
         } catch (error) {
           res.status(500).send(error);
         }
       } else {
-        res.status(400).send("Some values are missing");
+        res.status(400).json({
+          errors: [
+            {
+              message: "Some values are missing!",
+            },
+          ],
+        });
       }
 
 
@@ -83,44 +102,44 @@ exports.login = async (req, res) => {
   let query = format(`SELECT * FROM users WHERE card_id = %L`, user); //Sanifica i parametri che andranno nella query
   try {
     dbRes = await pool.query(query);
+
+    let userData = dbRes.rows[0];
+
+    bcrypt.compare(password, userData.password, async (err, result) => {
+
+      if (result) {
+
+        const accessToken = await jwt.sign(
+          { user },
+          process.env.JWT_SECRET,
+          { expiresIn: "3600s" }
+        );
+
+        const refreshToken = await jwt.sign(
+          { user },
+          process.env.REFRESH_SECRET,
+          { expiresIn: "1h" }
+        );
+
+        res.json({
+          user,
+          accessToken,
+          refreshToken
+        });
+
+      } else {
+        return res.status(401).json({
+          errors: [
+            {
+              message: "Wrong password!",
+            },
+          ],
+        });;
+      }
+    });
   } catch (error) {
     res.status(500).send(error);
   }
-
-  let userData = dbRes.rows[0];
-
-  bcrypt.compare(password, userData.password, async (err, result) => {
-
-    if (result) {
-
-      const accessToken = await jwt.sign(
-        { user },
-        process.env.JWT_SECRET,
-        { expiresIn: "3600s" }
-      );
-
-      const refreshToken = await jwt.sign(
-        { user },
-        process.env.REFRESH_SECRET,
-        { expiresIn: "1h" }
-      );
-
-      res.json({
-        user,
-        accessToken,
-        refreshToken
-      });
-
-    } else {
-      return res.status(401).json({
-        errors: [
-          {
-            message: "Wrong password!",
-          },
-        ],
-      });;
-    }
-  });
 }
 
 /**

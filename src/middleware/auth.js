@@ -15,6 +15,7 @@ const format = require('pg-format');
 const authAdminToken = async (req, res, next) => {
 
   let token = '';
+  let resDb;
   const authHeader = req.headers["authorization"];
 
   if(authHeader)
@@ -32,13 +33,20 @@ const authAdminToken = async (req, res, next) => {
 
     let query = "SELECT type FROM users WHERE card_id = %L";
     query = format(query, user);
-    let resDb = await pool.query(query);
-    console.log(resDb.rows[0].type);
 
-    if (resDb.rows[0].type == 1)
-      next();
-    else
-      unauthorized('Invalid Token', res);
+    try {
+
+      resDb = await pool.query(query);
+      console.log(resDb.rows[0].type);
+
+      if (resDb.rows[0].type == 1)
+        next();
+      else
+        unauthorized('Invalid Token', res);
+
+    } catch (error) {
+      res.status(500).send("Internal serve error");
+    }
 
   } catch (error) {
 

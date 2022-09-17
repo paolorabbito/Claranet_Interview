@@ -19,10 +19,10 @@ exports.signup = async (req, res) => {
   const email = req.body.email;
   const city = req.body.city;
   const age = req.body.age;
-  const gender = req.body.gender;
+  const gender = req.body.gender; //Facoltativo
  
 
-  if (!user || !password) 
+  if (!user || !password) {
     res.status(400).json({
       errors: [
         {
@@ -30,47 +30,60 @@ exports.signup = async (req, res) => {
         },
       ],
     });
+  }
 
-  let query = '';
+  if (name && surname && email && city && age) {
 
-  bcrypt.hash(password, saltRounds, async (err, hash) => {
-    query = format(`INSERT INTO users (card_id, password, type) VALUES (%L, %L, %L)`, user, hash, 3);
-    console.log(query)
-    try {
-      await pool.query(query);
-      if(name && surname && email && city && age) {
+    let query = '';
+
+    bcrypt.hash(password, saltRounds, async (err, hash) => { //ERRORE CONCETTUALE
+      query = format(`INSERT INTO users (card_id, password, type) VALUES (%L, %L, %L)`, user, hash, 3);
+      
+      try {
+        await pool.query(query);
+
         query = `INSERT INTO registry (card, name, surname, email, age, city, gender) VALUES (%L, %L, %L, %L, %L, %L, %L)`
         query = format(query, user, name, surname, email, age, city, gender);
         try {
-          console.log(query)
           await pool.query(query);
+
           res.status(200).json({
-            errors: [
+            operation: [
               {
                 message: "Signed up correctly!",
               },
             ],
           });
         } catch (error) {
-          res.status(500).send(error);
-        }
-      } else {
-        res.status(400).json({
+          res.status(500).json({
           errors: [
             {
-              message: "Some values are missing!",
+              message: "Can not insert values into database!",
+            },
+          ],
+        });
+        }
+
+      } catch (error) {
+        res.status(500).json({
+          errors: [
+            {
+              message: "Internal server error!",
             },
           ],
         });
       }
+    });
 
-
-    } catch (error) {
-      res.status(500).send(error);
-    }
-  });
-
-  
+  } else {
+    res.status(400).json({
+      errors: [
+        {
+          message: "Some values are missing!",
+        },
+      ],
+    });
+  }
 
 
   
@@ -89,7 +102,7 @@ exports.login = async (req, res) => {
   const password = req.body.password;
   let dbRes;
 
-  if (!user) {
+  if (!user || !password) {
     return res.status(400).json({
       errors: [
         {
@@ -99,46 +112,56 @@ exports.login = async (req, res) => {
     });
   }
 
-  let query = format(`SELECT * FROM users WHERE card_id = %L`, user); //Sanifica i parametri che andranno nella query
+  let query = format(`SELECT * FROM users WHERE card_id = %L`, user); 
   try {
     dbRes = await pool.query(query);
 
     let userData = dbRes.rows[0];
 
-    bcrypt.compare(password, userData.password, async (err, result) => {
+    if(userData) {
 
-      if (result) {
+      bcrypt.compare(password, userData.password, async (err, result) => {
 
-        const accessToken = await jwt.sign(
-          { user },
-          process.env.JWT_SECRET,
-          { expiresIn: "3600s" }
-        );
+        if (result) {
 
-        const refreshToken = await jwt.sign(
-          { user },
-          process.env.REFRESH_SECRET,
-          { expiresIn: "1h" }
-        );
+          const accessToken = await jwt.sign(
+            { user },
+            process.env.JWT_SECRET,
+            { expiresIn: "3600s" }
+          );
 
-        res.json({
-          user,
-          accessToken,
-          refreshToken
-        });
+          const refreshToken = await jwt.sign(
+            { user },
+            process.env.REFRESH_SECRET,
+            { expiresIn: "1h" }
+          );
 
-      } else {
-        return res.status(401).json({
-          errors: [
-            {
-              message: "Wrong password!",
-            },
-          ],
-        });;
-      }
-    });
+          res.status(200).json({
+            user,
+            accessToken,
+            refreshToken
+          });
+
+        } else {
+          return res.status(401).json({
+            errors: [
+              {
+                message: "Wrong password!",
+              },
+            ],
+          });
+        }
+      });
+
+    }
   } catch (error) {
-    res.status(500).send(error);
+    res.status(500).json({
+      errors: [
+        {
+          message: "Internal server error!",
+        },
+      ],
+    });
   }
 }
 
@@ -171,7 +194,7 @@ exports.refresh = async (req, res) => {
 
     if (decoded && decoded.user) {
 
-      let user = decoded.user;
+      const user = decoded.user;
 
       const accessToken = await jwt.sign(
         { user },
@@ -191,14 +214,24 @@ exports.refresh = async (req, res) => {
         refreshToken
       });
 
+    } else {
+
+      return res.status(403).json({
+        errors: [
+          {
+            message: `Unauthorized: Refresh Token not valid`,
+          },
+        ],
+      });
+
     }
 
   } catch (error) {
 
-    return res.status(403).json({
+    return res.status(500).json({
       errors: [
         {
-          message: `Unauthorized: Refresh Token not valid`,
+          message: `Internal server error!`,
         },
       ],
     });

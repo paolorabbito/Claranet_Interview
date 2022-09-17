@@ -101,4 +101,14 @@ const jsonToExcel = (jsonInput) => {
 
 }
 
-module.exports = { setParams, queryPagination, filterByCity, filterByDate, filterByProduct, jsonToExcel, filterFromDate, filterToDate }
+const serviceError = (code, msg,res) => {
+    res.status(code).json({
+      errors: [
+        {
+          message: `${msg}`,
+        },
+      ],
+    });
+  }
+
+module.exports = { setParams, queryPagination, filterByCity, filterByDate, filterByProduct, jsonToExcel, filterFromDate, filterToDate, serviceError }

@@ -15,6 +15,12 @@ const pool = new Pool({
 	user: process.env.DB_USER,
 	password: process.env.DB_PASSWORD,
 	database: process.env.DATABASE,
+});
+
+pool.connect().then(() => {
+	console.log("Connection to db enstablished!")
+}).catch((err) => {
+	console.log(err);
 })
 
 module.exports = pool;

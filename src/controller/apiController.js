@@ -14,7 +14,7 @@ const format = require('pg-format');
  * @param {*} req 
  * @param {*} res 
  */
-const getProductStats = async (req, res) => {
+const getProductsStats = async (req, res) => {
 
     let params = {
         pagination: {},
@@ -31,24 +31,19 @@ const getProductStats = async (req, res) => {
 
     if (Object.keys(params.filter).length !== 0) {
 
-        if (Object.keys(params.filter).length >= 1)
-            query += `WHERE `;
+        if (Object.keys(params.filter).length >= 1) query += `WHERE `;
 
-        if (params.filter.salesPoint)
-            query = services.filterByCity(query, params.filter.salesPoint);
+        if (params.filter.salesPoint) query = services.filterByCity(query, params.filter.salesPoint);
 
-        if (Object.keys(params.filter).length >= 2) {
-            query += ' AND ';
-        }
+        if (Object.keys(params.filter).length >= 2) query += ' AND ';
 
-        if (params.filter.date)
-            query = services.filterByDate(query, params.filter.date);
+        if (params.filter.date) query = services.filterByDate(query, params.filter.date);
 
     }
 
     query += ` ORDER BY s.date `;
     query = services.queryPagination(query, params);
-    console.log(query);
+
     try {
         resDb = await pool.query(query);
 
@@ -65,32 +60,35 @@ const getProductStats = async (req, res) => {
 
         res.status(200).json(resDb.rows);
     } catch (error) {
-        res.status(500).send(error);
+        console.log(error);
+        services.serviceError(500, "Internal server error!", res);
     }
 
 
 
 }
 
-
+/**
+ * Ritorna le statistiche medie di un determinato prodotto in un determinato range
+ * di date tra i vari punti vendita (produzione/vendità media e incassi/spese medie)
+ * @param {*} req 
+ * @param {*} res 
+ */
 const getProductAverage = async (req, res) => {
+
+    const product = req.params['id'];
+    
+    if (!product) //NON NECESSARIO IN QUANTO LA RISORSA NON È RAGGIUNGIBILE SENCA UN PRODUCT
+        services.serviceError(400, "Bad request: Product code is missing!", res);
 
     let params = {
         pagination: {},
         filter: {}
     };
+
     let resDb;
 
     services.setParams(params, req);
-
-    if (!params.filter.product)
-        res.status(400).json({
-            errors: [
-              {
-                message: "Product code is missing!",
-              },
-            ],
-        });
 
     let query = `SELECT p.id,
                         AVG(s.in) as media_prodotti,
@@ -100,9 +98,9 @@ const getProductAverage = async (req, res) => {
                  FROM product as p
                  INNER JOIN sales as s on p.id = s.product_id
                  INNER JOIN sales_point as sp on sp.id = s.sales_point 
-                 WHERE `;
+                 WHERE p.id = %L `;
 
-    query = services.filterByProduct(query, params.filter.product); //TODO: CAMBIARE A PATH PARAMS
+    query = format(query, product);
 
     if (params.filter.from) {
         query += ' AND ';
@@ -116,29 +114,32 @@ const getProductAverage = async (req, res) => {
 
     query += ` GROUP BY p.id `;
 
-    console.log(query);
     try {
         resDb = await pool.query(query);
 
-        let cashOutAvg = resDb.rows[0].media_prodotti * resDb.rows[0].production_cost;
-        let cashInAvg = resDb.rows[0].media_venduti * resDb.rows[0].selling_cost;
+        if(resDb.rows[0]) {
 
-        resToSend = {
-            id: resDb.rows[0].id,
-            productionAvg: resDb.rows[0].media_prodotti,
-            salesAvg: resDb.rows[0].media_venduti,
-            cashOutAvg: cashOutAvg,
-            cashInAvg: cashInAvg,
-            earn: cashInAvg - cashOutAvg
+            let cashOutAvg = resDb.rows[0].media_prodotti * resDb.rows[0].production_cost;
+            let cashInAvg = resDb.rows[0].media_venduti * resDb.rows[0].selling_cost;
+
+            resToSend = {
+                id: resDb.rows[0].id,
+                productionAvg: resDb.rows[0].media_prodotti,
+                salesAvg: resDb.rows[0].media_venduti,
+                cashOutAvg: cashOutAvg,
+                cashInAvg: cashInAvg,
+                earn: cashInAvg - cashOutAvg
+            }
+
+            res.status(200).json(resToSend);
+        } else {
+            services.serviceError(404, "Resource not found!", res);
         }
-
-        res.status(200).json(resToSend)
     } catch (error) {
-        res.status(500).send(error);
+        console.log(error);
+        services.serviceError(500, "Internal server error!", res);
     }
 
-
-    ;
 }
 
 
@@ -152,4 +153,4 @@ const getUserInfo = async (req, res) => {
     res.status(200).json(resDb.rows);
 }
 
-module.exports = { getUserInfo, getProductStats, getProductAverage };
+module.exports = { getUserInfo, getProductsStats, getProductAverage };

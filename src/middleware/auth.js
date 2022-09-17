@@ -1,7 +1,7 @@
 /**
- * In un contesto reale si potrebbero implementare più di 2 livelli di accesso 
- * Magari inserendo un controllo sun un determinato campo degli header tipo x-client
- * Dove ad un dato x-client spetta l'accesso solo a determinate risorse o dove le quey vengano
+ * In un contesto reale si potrebbero implementare più di 3 livelli di accesso 
+ * Magari inserendo un controllo su un determinato campo degli header tipo x-client
+ * Dove ad un dato x-client spetta l'accesso solo a determinate risorse o dove le query vengano
  * Filtrate inserendo solo i dati relativi al punto vendita identificato dal campo.
  * O ancora si potrebbe pensare di creare due utenti di admin, e non solo uno in modo 
  * Da permettere diversi livelli di accesso in base alle informazioni da controllare
@@ -11,6 +11,7 @@ const jwt = require("jsonwebtoken");
 require('dotenv').config();
 const pool = require('../database/db');
 const format = require('pg-format');
+const { serviceError } = require('../services/queryService');
 
 const authAdminToken = async (req, res, next) => {
 
@@ -21,10 +22,55 @@ const authAdminToken = async (req, res, next) => {
   if(authHeader)
     token = authHeader.split(" ")[1];
   else
-    unauthorized('Token not found', res);
+    serviceError(401, 'Unauthorized: Token not found', res);
 
   if (!token) 
-    unauthorized('Token not found', res);
+    serviceError(401, 'Unauthorized: Token not found', res);
+
+  try {
+
+    const decoded = await jwt.verify(token, process.env.JWT_SECRET);
+    let user = decoded.user;
+
+    if(user) {
+
+      let query = "SELECT type FROM users WHERE card_id = %L";
+      query = format(query, user);
+
+      try {
+
+        resDb = await pool.query(query);
+
+        if (resDb.rows[0].type == 1)
+          next();
+        else
+          serviceError(401, 'Unauthorized: Invalid token!', res);
+
+      } catch (error) {
+        serviceError(500, 'Internal server error!', res);
+      }
+    } else {
+      serviceError(401, 'Unauthorized: Invalid token!', res);
+    }
+  } catch (error) {
+
+    serviceError(401, 'Unauthorized: Invalid token!', res);
+
+  }
+};
+
+const authOperatorToken = async (req, res, next) => {
+
+  let token = '';
+  const authHeader = req.headers["authorization"];
+
+  if(authHeader)
+    token = authHeader.split(" ")[1];
+  else
+    serviceError(401, 'Unauthorized: Token not found', res);
+
+  if (!token) 
+    serviceError(401, 'Unauthorized: Token not found', res);
 
   try {
 
@@ -36,61 +82,24 @@ const authAdminToken = async (req, res, next) => {
 
     try {
 
-      resDb = await pool.query(query);
-      console.log(resDb.rows[0].type);
+      let resDb = await pool.query(query);
 
-      if (resDb.rows[0].type == 1)
+      if (resDb.rows[0].type == 1 || resDb.rows[0].type == 2)
         next();
       else
-        unauthorized('Invalid Token', res);
-
+        serviceError(401, 'Unauthorized: Invalid token!', res);
+      
     } catch (error) {
-      res.status(500).send("Internal serve error");
+      serviceError(500, 'Internal server error!', res);
     }
+    
 
   } catch (error) {
 
-    unauthorized('Invalid Token', res);
+    serviceError(401, 'Unauthorized: Invalid token!', res);
 
   }
 };
-
-
-const authOperatorToken = async (req, res, next) => {
-
-  let token = '';
-  const authHeader = req.headers["authorization"];
-
-  if(authHeader)
-    token = authHeader.split(" ")[1];
-  else
-    unauthorized('Token not found', res);
-
-  if (!token) 
-    unauthorized('Token not found', res);
-
-  try {
-
-    const decoded = await jwt.verify(token, process.env.JWT_SECRET);
-    let user = decoded.user;
-
-    let query = "SELECT type FROM users WHERE card_id = %L";
-    query = format(query, user);
-    let resDb = await pool.query(query);
-    console.log(resDb.rows[0].type);
-
-    if (resDb.rows[0].type == 1 || resDb.rows[0].type == 2)
-      next();
-    else
-      unauthorized('Invalid Token', res);
-
-  } catch (error) {
-
-    unauthorized('Invalid Token', res);
-
-  }
-};
-
 
 const authUserToken = async (req, res, next) => {
 
@@ -100,10 +109,10 @@ const authUserToken = async (req, res, next) => {
   if(authHeader)
     token = authHeader.split(" ")[1];
   else
-    unauthorized('Token not found', res);
+    serviceError(401, 'Unauthorized: Token not found', res);
 
   if (!token) 
-    unauthorized('Token not found', res);
+    serviceError(401, 'Unauthorized: Token not found', res);
 
   try {
 
@@ -114,24 +123,16 @@ const authUserToken = async (req, res, next) => {
       req.user = user;
       next();
     } else
-      unauthorized('Invalid Token', res);
+      serviceError(401, 'Unauthorized: Invalid token!', res);
 
   } catch (error) {
 
-    unauthorized('Invalid Token', res);
+    serviceError(401, 'Unauthorized: Invalid token!', res);
 
   }
 
 }
 
-const unauthorized = (msg,res) => {
-  res.status(403).json({
-    errors: [
-      {
-        message: `Unauthorized: ${msg}`,
-      },
-    ],
-  });
-}
+
 
 module.exports = { authAdminToken, authUserToken, authOperatorToken };

@@ -89,7 +89,7 @@ const filterByProduct = (query, filter) => {
 
 }
 
-const jsonToExcel = async (jsonInput) => {
+const jsonToExcel = async (jsonInput) => { //Si potrebbe pensare di scrivere direttamente il file nello stream res e non salvarlo qual'ora non sia necessario
 
     let r = (Math.random() + 1).toString(36).substring(7);
     const workSheet = xlsx.utils.json_to_sheet(jsonInput);

@@ -47,15 +47,19 @@ const getProductsStats = async (req, res) => {
     try {
         resDb = await pool.query(query);
 
-        if (params.exports) {
-            let r = await services.jsonToExcel(resDb.rows);
-            console.log(__dirname)
-            let filePath = path.join(__dirname, `/../../public/file/data${r}.xlsx`);
-            res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-            res.setHeader('Content-Disposition', `attachment; filename=data${r}.xlsx`);
-            res.status(200).download(filePath);
+        if(resDb.rows) {
+            if (params.exports) {
+                let r = await services.jsonToExcel(resDb.rows);
+                console.log(__dirname)
+                let filePath = path.join(__dirname, `/../../public/file/data${r}.xlsx`);
+                res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+                res.setHeader('Content-Disposition', `attachment; filename=data${r}.xlsx`);
+                res.status(200).download(filePath);
+            } else {
+                res.status(200).json(resDb.rows);
+            }
         } else {
-            res.status(200).json(resDb.rows);
+            services.serviceError(404, "Can't find results!", res);
         }
     } catch (error) {
         console.log(error);

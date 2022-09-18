@@ -1,3 +1,9 @@
-GET http://localhost:3000/api/stats/products/avg?product=1&from=2021-09-28&to=2021-09-29
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiMDAwMDAwMDAiLCJpYXQiOjE2NjMzNjE3ODEsImV4cCI6MTY2MzM2NTM4MX0.6lYVjyzGjJvxcDzYbX7JrcJrFisf_QIFsJo4szACxu0
+GET http://localhost:3000/api/stats/products/1/avg?from=2021-09-28&to=2021-09-29
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiMDAwMDAwMDAiLCJpYXQiOjE2NjM0NDA0OTMsImV4cCI6MTY2MzQ0NDA5M30.7PYpRlMaFJsMT0-4tvOa2oQNWIh6eEakg3vKyr-VSZ0
 Content-Type: application/json
+
+# Wrong id REQUEST
+# GET http://localhost:3000/api/stats/products/0/avg?from=2021-09-28&to=2021-09-29
+# Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiMDAwMDAwMDAiLCJpYXQiOjE2NjM0NDA0OTMsImV4cCI6MTY2MzQ0NDA5M30.7PYpRlMaFJsMT0-4tvOa2oQNWIh6eEakg3vKyr-VSZ0
+# Content-Type: application/json
+

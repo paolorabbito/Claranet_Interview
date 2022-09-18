@@ -48,17 +48,15 @@ const getProductsStats = async (req, res) => {
         resDb = await pool.query(query);
 
         if (params.exports) {
-
-            services.jsonToExcel(resDb.rows);
-            let filePath = path.join(__dirname, '../../public/file/data.xlsx');
-            let stat = fileSystem.statSync(filePath);
-            res.setHeader('Content-Length', stat.size);
-            res.setHeader('Content-Type', 'text/xlsx');
-            res.setHeader('Content-Disposition', 'attachment; filename=data.xlsx');
-            res.download(filePath);
+            let r = await services.jsonToExcel(resDb.rows);
+            console.log(__dirname)
+            let filePath = path.join(__dirname, `/../../public/file/data${r}.xlsx`);
+            res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+            res.setHeader('Content-Disposition', `attachment; filename=data${r}.xlsx`);
+            res.status(200).download(filePath);
+        } else {
+            res.status(200).json(resDb.rows);
         }
-
-        res.status(200).json(resDb.rows);
     } catch (error) {
         console.log(error);
         services.serviceError(500, "Internal server error!", res);

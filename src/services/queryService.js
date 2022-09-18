@@ -34,8 +34,6 @@ const setParams = (params, req) => {
     if(req.query.exports)   params.exports = true;
     else    params.exports = false;
 
-    console.log(params)
-
 }
 
 const queryPagination = (query, params) => {
@@ -91,13 +89,16 @@ const filterByProduct = (query, filter) => {
 
 }
 
-const jsonToExcel = (jsonInput) => {
+const jsonToExcel = async (jsonInput) => {
 
+    let r = (Math.random() + 1).toString(36).substring(7);
     const workSheet = xlsx.utils.json_to_sheet(jsonInput);
     const workBook = xlsx.utils.book_new();
-    xlsx.utils.book_append_sheet(workBook, workSheet, "data");
+    xlsx.utils.book_append_sheet(workBook, workSheet, `data${r}`);
+    xlsx.write(workBook, { bookType: 'xlsx', type: "buffer" });
     xlsx.write(workBook, { bookType: "xlsx", type: "binary" });
-    xlsx.writeFile(workBook, "public/file/data.xlsx");
+    xlsx.writeFile(workBook, `public/file/data${r}.xlsx`);  
+    return r;
 
 }
 

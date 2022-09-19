@@ -63,9 +63,6 @@ exports.signup = async (req, res) => {
     return serviceError(400, "Some values are missing!", res);
   }
 
-
-  
-
 }
 
 /**
@@ -85,11 +82,10 @@ exports.login = async (req, res) => {
   let query = format(`SELECT * FROM users WHERE card_id = %L`, user); 
   try {
     dbRes = await pool.query(query);
-
     let userData = dbRes.rows[0];
 
     if(userData) {
-
+      console.log(dbRes)
       const level = userData.type
 
       bcrypt.compare(password, userData.password, async (err, result) => {
@@ -126,6 +122,8 @@ exports.login = async (req, res) => {
         }
       });
 
+    } else {
+      return serviceError(400, "User not found!", res);
     }
   } catch (error) {
     return serviceError(500, "Internal server error!", res);
@@ -186,6 +184,6 @@ exports.refresh = async (req, res) => {
     }
 
   } catch (error) {
-    return serviceError(500, "Internal server error!", res);
+    return serviceError(500, "Can't decode token!", res);
   }
 }

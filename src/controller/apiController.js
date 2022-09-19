@@ -23,7 +23,7 @@ const getProductsStats = async (req, res) => {
 
     services.setParams(params, req);
 
-    let query = `SELECT sp.city, p.description, (p.production_cost*s.in) as cash_out, (p.selling_cost*s.out) as cash_in, s.in, s.out, s.date
+    let query = `SELECT DISTINCT sp.city, p.description, (p.production_cost*s.in) as cash_out, (p.selling_cost*s.out) as cash_in, s.in, s.out, s.date
                  FROM product as p
                  INNER JOIN sales as s on p.id = s.product_id
                  INNER JOIN sales_point as sp on sp.id = s.sales_point `;
@@ -46,7 +46,7 @@ const getProductsStats = async (req, res) => {
     try {
         resDb = await pool.query(query);
 
-        if(resDb.rows) {
+        if(resDb.rowCount!=0) {
             if (params.exports) {
                 let r = await services.jsonToExcel(resDb.rows);
                 console.log(__dirname)
@@ -134,7 +134,7 @@ const getProductAverage = async (req, res) => {
 
             res.status(200).json(resToSend);
         } else {
-            return services.serviceError(404, "Resource not found!", res);
+            return services.serviceError(404, "Product not found!", res);
         }
     } catch (error) {
         console.log(error);

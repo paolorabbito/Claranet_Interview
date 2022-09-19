@@ -40,6 +40,7 @@ const queryPagination = (query, params) => {
 
     let pageSize = Number.parseInt(params.pagination.pageSize);
     let page = (Number.parseInt(params.pagination.page)-1)*pageSize;
+    console.log('page: ', page);
     query += `LIMIT %L OFFSET %L`;
     query = format(query, pageSize, page);
     return query;

@@ -3,6 +3,7 @@ const format = require('pg-format');
 require("dotenv").config();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { serviceError } = require('../services/queryService');
 
 /**
  * Usata da me perinserire utenti di test del DB
@@ -11,6 +12,7 @@ const jwt = require('jsonwebtoken');
  */
 exports.signup = async (req, res) => {
 
+  //Potrebbero essere un unico oggetto
   const saltRounds = 10;
   const user = req.body.user;
   const password = req.body.password;
@@ -22,15 +24,9 @@ exports.signup = async (req, res) => {
   const gender = req.body.gender; //Facoltativo
  
 
-  if (!user || !password) {
-    res.status(400).json({
-      errors: [
-        {
-          message: "User or password not present!",
-        },
-      ],
-    });
-  }
+  if (!user || !password) 
+    return serviceError(400, "User or password not present!", res);
+  
 
   if (name && surname && email && city && age) {
 
@@ -55,34 +51,16 @@ exports.signup = async (req, res) => {
             ],
           });
         } catch (error) {
-          res.status(500).json({
-          errors: [
-            {
-              message: "Can not insert values into database!",
-            },
-          ],
-        });
+          return serviceError(500, "Can not insert values into database!", res);
         }
 
       } catch (error) {
-        res.status(500).json({
-          errors: [
-            {
-              message: "Internal server error!",
-            },
-          ],
-        });
+        return serviceError(500, "Can not insert values into database!", res);
       }
     });
 
   } else {
-    res.status(400).json({
-      errors: [
-        {
-          message: "Some values are missing!",
-        },
-      ],
-    });
+    return serviceError(400, "Some values are missing!", res);
   }
 
 
@@ -94,7 +72,6 @@ exports.signup = async (req, res) => {
  * Autenticazione e invio del jwt in risposta
  * @param {*} req 
  * @param {*} res 
- * @returns 
  */
 exports.login = async (req, res) => {
 
@@ -102,16 +79,9 @@ exports.login = async (req, res) => {
   const password = req.body.password;
   let dbRes;
 
-  if (!user || !password) {
-    return res.status(400).json({
-      errors: [
-        {
-          message: "Invalid credentials",
-        },
-      ],
-    });
-  }
-
+  if (!user || !password) 
+    return serviceError(400, "Invalid credentials", res);
+    
   let query = format(`SELECT * FROM users WHERE card_id = %L`, user); 
   try {
     dbRes = await pool.query(query);
@@ -120,56 +90,52 @@ exports.login = async (req, res) => {
 
     if(userData) {
 
+      const level = userData.type
+
       bcrypt.compare(password, userData.password, async (err, result) => {
 
         if (result) {
 
           const accessToken = await jwt.sign(
-            { user },
+            { 
+              user,
+              level          
+            },
             process.env.JWT_SECRET,
             { expiresIn: "3600s" }
           );
 
           const refreshToken = await jwt.sign(
-            { user },
+            { 
+              user,
+              level         
+            },
             process.env.REFRESH_SECRET,
             { expiresIn: "1h" }
           );
 
           res.status(200).json({
             user,
+            level,
             accessToken,
             refreshToken
           });
 
         } else {
-          return res.status(401).json({
-            errors: [
-              {
-                message: "Wrong password!",
-              },
-            ],
-          });
+          return serviceError(401, "Wrong password!", res);
         }
       });
 
     }
   } catch (error) {
-    res.status(500).json({
-      errors: [
-        {
-          message: "Internal server error!",
-        },
-      ],
-    });
+    return serviceError(500, "Internal server error!", res);
   }
 }
 
 /**
  * Richiesta refresh token
  * @param {*} req 
- * @param {*} res 
- * @returns 
+ * @param {*} res
  */
 exports.refresh = async (req, res) => {
 
@@ -179,15 +145,8 @@ exports.refresh = async (req, res) => {
   if (authHeader)
     refreshToken = authHeader.split(" ")[1];
   else
-    res.status(403).json({
-      errors: [
-        {
-          message: `Unauthorized: Refresh Token not found`,
-        },
-      ],
-    });
-
-
+    return serviceError(403, `Forbidden: Refresh Token not found!`, res);
+    
   try {
     const decoded = await jwt.verify(refreshToken, process.env.REFRESH_SECRET);
 
@@ -195,46 +154,38 @@ exports.refresh = async (req, res) => {
     if (decoded && decoded.user) {
 
       const user = decoded.user;
+      const level = decoded.level;
 
       const accessToken = await jwt.sign(
-        { user },
+        { 
+          user,
+          level
+        },
         process.env.JWT_SECRET,
         { expiresIn: "3600s" }
       );
 
       const refreshToken = await jwt.sign(
-        { user },
+        { 
+          user,
+          level
+        },
         process.env.REFRESH_SECRET,
         { expiresIn: "1h" }
       );
 
       return res.json({
         user,
+        level,
         accessToken,
         refreshToken
       });
 
     } else {
-
-      return res.status(403).json({
-        errors: [
-          {
-            message: `Unauthorized: Refresh Token not valid`,
-          },
-        ],
-      });
-
+      return serviceError(403, `Unauthorized: Refresh Token not valid!`, res);
     }
 
   } catch (error) {
-
-    return res.status(500).json({
-      errors: [
-        {
-          message: `Internal server error!`,
-        },
-      ],
-    });
-
+    return serviceError(500, "Internal server error!", res);
   }
 }

@@ -91,7 +91,7 @@ const filterByProduct = (query, filter) => {
 
 const jsonToExcel = async (jsonInput) => { //Si potrebbe pensare di scrivere direttamente il file nello stream res e non salvarlo qual'ora non sia necessario
 
-    let r = (Math.random() + 1).toString(36).substring(7);
+    let r = (Math.random() + 1).toString(36).substring(7); //Si potrebbe usare la data e l'ora dell'esportazione piuttosto che un numero random
     const workSheet = xlsx.utils.json_to_sheet(jsonInput);
     const workBook = xlsx.utils.book_new();
     xlsx.utils.book_append_sheet(workBook, workSheet, `data${r}`);

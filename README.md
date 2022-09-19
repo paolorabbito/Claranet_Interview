@@ -7,6 +7,7 @@ Inoltre il progetto finale dovrebbe permettere anche la registrazione e l'access
 Ogni singolo utente quindi potrà accedere alle proprie offerte e tramite l'app o la carta potrà registrare i suoi acquisti nei punti vendita. 
 
 ## PUNTI CHIAVE
+- Autenticazione su più livelli attraverso jwt
 - Uso di middleware per limitare l'accesso alle risorse su più livelli
 - Permettere all'utente di poter eliminare il proprio account poichè ormai richiesto dall'apple/play store
 - Utilizzo di filtri e parametri per filtrare le informazioni richieste al back-end e permetterne una corretta paginazione

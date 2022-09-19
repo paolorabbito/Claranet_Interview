@@ -9,130 +9,175 @@
 
 const jwt = require("jsonwebtoken");
 require('dotenv').config();
-const pool = require('../database/db');
-const format = require('pg-format');
 const { serviceError } = require('../services/queryService');
 
-const authAdminToken = async (req, res, next) => {
 
-  let token = '';
-  let resDb;
-  const authHeader = req.headers["authorization"];
+// 3 middleware e solo user codificato nel jwt
 
-  if(authHeader)
-    token = authHeader.split(" ")[1];
-  else
-    serviceError(401, 'Unauthorized: Token not found', res);
+// const authAdminToken = async (req, res, next) => {
 
-  if (!token) 
-    serviceError(401, 'Unauthorized: Token not found', res);
+//   let token = '';
+//   let resDb;
+//   const authHeader = req.headers["authorization"];
 
-  try {
+//   if(authHeader)
+//     token = authHeader.split(" ")[1];
+//   else
+//     serviceError(401, 'Unauthorized: Token not found', res);
 
-    const decoded = await jwt.verify(token, process.env.JWT_SECRET);
-    let user = decoded.user;
+//   if (!token) 
+//     serviceError(401, 'Unauthorized: Token not found', res);
 
-    if(user) {
+//   try {
 
-      let query = "SELECT type FROM users WHERE card_id = %L";
-      query = format(query, user);
+//     const decoded = await jwt.verify(token, process.env.JWT_SECRET);
+//     let user = decoded.user;
 
-      try {
+//     if(user) {
 
-        resDb = await pool.query(query);
+//       let query = "SELECT type FROM users WHERE card_id = %L";
+//       query = format(query, user);
 
-        if (resDb.rows[0].type == 1)
-          next();
-        else
-          serviceError(401, 'Unauthorized: Invalid token!', res);
+//       try {
 
-      } catch (error) {
-        serviceError(500, 'Internal server error!', res);
-      }
-    } else {
-      serviceError(401, 'Unauthorized: Invalid token!', res);
-    }
-  } catch (error) {
+//         resDb = await pool.query(query);
 
-    serviceError(401, 'Unauthorized: Invalid token!', res);
+//         if (resDb.rows[0].type == 1)
+//           next();
+//         else
+//           serviceError(401, 'Unauthorized: Invalid token!', res);
 
-  }
-};
+//       } catch (error) {
+//         serviceError(500, 'Internal server error!', res);
+//       }
+//     } else {
+//       serviceError(401, 'Unauthorized: Invalid token!', res);
+//     }
+//   } catch (error) {
 
-const authOperatorToken = async (req, res, next) => {
+//     serviceError(401, 'Unauthorized: Invalid token!', res);
 
-  let token = '';
-  const authHeader = req.headers["authorization"];
+//   }
+// };
 
-  if(authHeader)
-    token = authHeader.split(" ")[1];
-  else
-    serviceError(401, 'Unauthorized: Token not found', res);
+// const authOperatorToken = async (req, res, next) => {
 
-  if (!token) 
-    serviceError(401, 'Unauthorized: Token not found', res);
+//   let token = '';
+//   const authHeader = req.headers["authorization"];
 
-  try {
+//   if(authHeader)
+//     token = authHeader.split(" ")[1];
+//   else
+//     serviceError(401, 'Unauthorized: Token not found', res);
 
-    const decoded = await jwt.verify(token, process.env.JWT_SECRET);
-    let user = decoded.user;
+//   if (!token) 
+//     serviceError(401, 'Unauthorized: Token not found', res);
 
-    let query = "SELECT type FROM users WHERE card_id = %L";
-    query = format(query, user);
+//   try {
 
-    try {
+//     const decoded = await jwt.verify(token, process.env.JWT_SECRET);
+//     let user = decoded.user;
 
-      let resDb = await pool.query(query);
+//     let query = "SELECT type FROM users WHERE card_id = %L";
+//     query = format(query, user);
 
-      if (resDb.rows[0].type == 1 || resDb.rows[0].type == 2)
-        next();
-      else
-        serviceError(401, 'Unauthorized: Invalid token!', res);
+//     try {
+
+//       let resDb = await pool.query(query);
+
+//       if (resDb.rows[0].type == 1 || resDb.rows[0].type == 2)
+//         next();
+//       else
+//         serviceError(401, 'Unauthorized: Invalid token!', res);
       
-    } catch (error) {
-      serviceError(500, 'Internal server error!', res);
-    }
+//     } catch (error) {
+//       serviceError(500, 'Internal server error!', res);
+//     }
     
 
-  } catch (error) {
+//   } catch (error) {
 
-    serviceError(401, 'Unauthorized: Invalid token!', res);
+//     serviceError(401, 'Unauthorized: Invalid token!', res);
 
+//   }
+// };
+
+// const authUserToken = async (req, res, next) => {
+
+//   let token = '';
+//   const authHeader = req.headers["authorization"];
+
+//   if(authHeader)
+//     token = authHeader.split(" ")[1];
+//   else
+//     serviceError(401, 'Unauthorized: Token not found', res);
+
+//   if (!token) 
+//     serviceError(401, 'Unauthorized: Token not found', res);
+
+//   try {
+
+//     const decoded = await jwt.verify(token, process.env.JWT_SECRET);
+//     let user = decoded.user;
+
+//     if (user) { //Si potrebbe pensare di escludere l'utente admin '00000000'
+//       req.user = user;
+//       next();
+//     } else
+//       serviceError(401, 'Unauthorized: Invalid token!', res);
+
+//   } catch (error) {
+
+//     serviceError(401, 'Unauthorized: Invalid token!', res);
+
+//   }
+
+// }
+
+const authToken = (type) => {
+  return async (req, res, next) => {
+    let token = '';
+    const authHeader = req.headers["authorization"];
+  
+    if(authHeader)
+      token = authHeader.split(" ")[1];
+    else
+      serviceError(401, 'Unauthorized: Token not found', res);
+  
+    if (!token) 
+      serviceError(401, 'Unauthorized: Token not found', res);
+  
+    try {
+  
+      const decoded = await jwt.verify(token, process.env.JWT_SECRET);
+      const user = decoded.user;
+      const level = decoded.level;
+
+      console.log(type, level)
+  
+      if(user) {
+  
+        try {
+
+          if (level <= type) {
+            req.user = user;
+            next();
+          } else
+            serviceError(401, 'Unauthorized: Invalid token!', res);
+  
+        } catch (error) {
+          serviceError(500, 'Internal server error!', res);
+        }
+      } else {
+        serviceError(401, 'Unauthorized: Invalid token!', res);
+      }
+    } catch (error) {
+  
+      serviceError(401, 'Unauthorized: Invalid token!', res);
+  
+    }
   }
 };
 
-const authUserToken = async (req, res, next) => {
 
-  let token = '';
-  const authHeader = req.headers["authorization"];
-
-  if(authHeader)
-    token = authHeader.split(" ")[1];
-  else
-    serviceError(401, 'Unauthorized: Token not found', res);
-
-  if (!token) 
-    serviceError(401, 'Unauthorized: Token not found', res);
-
-  try {
-
-    const decoded = await jwt.verify(token, process.env.JWT_SECRET);
-    let user = decoded.user;
-
-    if (user) { //Si potrebbe pensare di escludere l'utente admin '00000000'
-      req.user = user;
-      next();
-    } else
-      serviceError(401, 'Unauthorized: Invalid token!', res);
-
-  } catch (error) {
-
-    serviceError(401, 'Unauthorized: Invalid token!', res);
-
-  }
-
-}
-
-
-
-module.exports = { authAdminToken, authUserToken, authOperatorToken };
+module.exports = { authToken };

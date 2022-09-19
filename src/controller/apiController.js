@@ -1,4 +1,3 @@
-//TODO: [FIX] usare i path params per id specifico
 const pool = require('../database/db');
 const services = require('../services/queryService');
 require("dotenv").config();
@@ -59,11 +58,11 @@ const getProductsStats = async (req, res) => {
                 res.status(200).json(resDb.rows);
             }
         } else {
-            services.serviceError(404, "Can't find results!", res);
+            return services.serviceError(404, "Can't find results!", res);
         }
     } catch (error) {
         console.log(error);
-        services.serviceError(500, "Internal server error!", res);
+        return services.serviceError(500, "Internal server error!", res);
     }
 
 
@@ -135,15 +134,14 @@ const getProductAverage = async (req, res) => {
 
             res.status(200).json(resToSend);
         } else {
-            services.serviceError(404, "Resource not found!", res);
+            return services.serviceError(404, "Resource not found!", res);
         }
     } catch (error) {
         console.log(error);
-        services.serviceError(500, "Internal server error!", res);
+        return services.serviceError(500, "Internal server error!", res);
     }
 
 }
-
 
 const getUserInfo = async (req, res) => {
     const user = req.user;
@@ -155,4 +153,27 @@ const getUserInfo = async (req, res) => {
     res.status(200).json(resDb.rows);
 }
 
-module.exports = { getUserInfo, getProductsStats, getProductAverage };
+const deleteUserInfo = async (req, res) => {
+
+    const user = req.user;
+
+    if(user != req.params['id']) 
+        return services.serviceError(400, "Bad request!", res);
+        
+    let query1 = `DELETE FROM users WHERE card_id = %L`;
+    let query2 = `DELETE FROM registry WHERE card = %L`;
+    query1 = format(query1, user);
+    query2 = format(query2, user);
+
+    try {
+        await pool.query(query1);
+        await pool.query(query2);
+        res.status(200).send("User deleted succesfully");
+    } catch (error) {
+        console.log(error);
+        return services.serviceError(500, "Internal server error!", res);
+    }
+
+}
+
+module.exports = { getUserInfo, getProductsStats, getProductAverage, deleteUserInfo };

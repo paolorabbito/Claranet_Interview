@@ -6,7 +6,7 @@ di ottenere in tempo reale statistiche sul consumo da parte dei clienti e sulle 
 Inoltre il progetto finale dovrebbe permettere anche la registrazione e l'accesso di utenti identificati attraverso il numero della carta di fidelizzazione.
 Ogni singolo utente quindi potrà accedere alle proprie offerte e tramite l'app o la carta potrà registrare i suoi acquisti nei punti vendita. 
 
-## PUNTI CHIAVE
+## PUNTI CHIAVE SEGUITI
 - Autenticazione su più livelli attraverso jwt
 - Uso di middleware per limitare l'accesso alle risorse su più livelli
 - Permettere all'utente di poter eliminare il proprio account poichè ormai richiesto dall'apple/play store
@@ -24,20 +24,25 @@ Ogni singolo utente quindi potrà accedere alle proprie offerte e tramite l'app 
 - [./src/services] moduli con funzionalità di servizio riusabili
 
 ## END-POINT
-- /auth/login
+- /auth/login - POST
     - body: { user: [string], password: [string]}
     - return: { user: [string], accessToken: [string], refreshToken: [string] }
-- /auth/refresh
+- /auth/refresh - GET
     - header: Authorization Bearer [refreshToken: string]
     - return: { user: [string], accessToken: [string], refreshToken: [string] }
-- /api/stats/products
-    - header: Authorization Bearer [refreshToken: string]
+- /auth/signup - POST
+    - header: Authorization Bearer [accesToken: string]
+    - return: { user: [string], password: [string], name: [string], surname: [string], email: [string], city: [string], age: [number] }
+- /api/stats/products - GET
+    - header: Authorization Bearer [accessToken: string]
     - queryParams: [page, pageSize, exports, salesPoint, date]
     - return: { city: [string], description: [string], cash_out: [number], cash_in: [number], in: [number], out: [number], date: [date] } or data.xlsx in download
-- /api/stats/products/:id/avg
-    - header: Authorization Bearer [refreshToken: string]
+- /api/stats/products/:id/avg - GET
+    - header: Authorization Bearer [accessToken: string]
     - queryParams: [page, pageSize, from, to]
     - return: { id: [number], productionAvg: [number], salesAvg: [number], cashOutAvg: [number], cashInAvg: [number], earn: [number] }
+- /api/user/:id - DELETE
+    - header: Authorization Bearer [accesToken: string]
 
 ## SCELTE DI SVILUPPO
 - Il database è stato creato a scopo di test, ma non vi è stata una progettazione vera e propria, quindi mancano componenti quali trigger che lo rendano in grado di aggiornare le tabelle dinamicamente in base a certi cambiamenti

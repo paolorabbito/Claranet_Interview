@@ -63,9 +63,6 @@ const filterByDate = (query, filter) => {
 
 }
 
-/**
- * Non usati per via dei pochi dati di esempio nel database
- */
 const filterFromDate = (query, filter) => {
 
     query += `s.date >= %L `;
